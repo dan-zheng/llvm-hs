@@ -130,6 +130,8 @@ tests = testGroup "Optimization" [
       ],
 
   testGroup "individual" [
+    -- TODO: ConstantPropagation pass has been removed.
+    {-
     testCase "ConstantPropagation" $ do
       mOut <- optimize defaultPassSetSpec { transforms = [T.ConstantPropagation] } handAST
 
@@ -173,6 +175,7 @@ tests = testGroup "Optimization" [
          },
         FunctionAttributes (A.GroupID 0) [A.NoUnwind, A.ReadNone, A.UWTable]
        ],
+    -}
 
     testCase "SLPVectorization" $ do
       let

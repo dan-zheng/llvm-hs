@@ -293,13 +293,15 @@ instance DecodeM DecodeAST A.DIModule (Ptr FFI.DIModule) where
     let m = castPtr p :: Ptr FFI.DIModule
     configurationMacros <- decodeM =<< liftIO (FFI.getDIModuleConfigurationMacros m)
     includePath <- decodeM =<< liftIO (FFI.getDIModuleIncludePath m)
-    isysRoot <- decodeM =<< liftIO (FFI.getDIModuleISysRoot m)
+    apiNotesFile <- decodeM =<< liftIO (FFI.getDIModuleAPINotesFile m)
+    lineNo <- liftIO (FFI.getDIModuleLineNo m)
     pure A.Module
       { A.scope = scope
       , A.name = name
       , A.configurationMacros = configurationMacros
       , A.includePath = includePath
-      , A.isysRoot = isysRoot
+      , A.apiNotesFile = apiNotesFile
+      , A.lineNo = lineNo
       }
 
 instance EncodeM EncodeAST A.DIModule (Ptr FFI.DIModule) where
@@ -308,9 +310,9 @@ instance EncodeM EncodeAST A.DIModule (Ptr FFI.DIModule) where
     name <- encodeM name
     configurationMacros <- encodeM configurationMacros
     includePath <- encodeM includePath
-    isysRoot <- encodeM isysRoot
+    apiNotesFile <- encodeM apiNotesFile
     Context c <- gets encodeStateContext
-    liftIO (FFI.getDIModule c scope name configurationMacros includePath isysRoot)
+    liftIO (FFI.getDIModule c scope name configurationMacros includePath apiNotesFile lineNo)
 
 genCodingInstance [t|A.DebugEmissionKind|] ''FFI.DebugEmissionKind
   [ (FFI.NoDebug, A.NoDebug)

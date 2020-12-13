@@ -201,7 +201,7 @@ DIEnumerator* LLVM_Hs_Get_DIEnumerator(LLVMContextRef cxt, int64_t value, LLVMBo
 }
 
 int64_t LLVM_Hs_DIEnumerator_GetValue(DIEnumerator* md) {
-    return md->getValue();
+    return md->getValue().getLimitedValue();
 }
 
 LLVMBool LLVM_Hs_DIEnumerator_GetIsUnsigned(DIEnumerator* md) {
@@ -332,8 +332,13 @@ DIVariable* LLVM_Hs_DISubrange_GetVariableCount(DISubrange* range) {
 }
 
 
+#if 0
 int64_t LLVM_Hs_DISubrange_GetLowerBound(DISubrange* range) {
     return range->getLowerBound();
+}
+#endif
+Metadata* LLVM_Hs_DISubrange_GetLowerBound(DISubrange* range) {
+    return range->getRawLowerBound();
 }
 
 MDTuple* LLVM_Hs_DICompositeType_GetElements(DICompositeType *dt) {
@@ -653,14 +658,14 @@ DICompileUnit* LLVM_Hs_Get_DICompileUnit
    unsigned sourceLanguage, DIFile* file, MDString* producer, LLVMBool isOptimized, MDString* flags,
    unsigned runtimeVersion, MDString* splitDebugFilename, unsigned emissionKind, Metadata* enumTypes, Metadata* retainedTypes,
    Metadata* globalVariables, Metadata* importedEntities, Metadata* macros, uint64_t dwoid, LLVMBool splitDebugInlining,
-   LLVMBool debugInfoForProfiling, unsigned nameTableKind, LLVMBool debugBaseAddress) {
+   LLVMBool debugInfoForProfiling, unsigned nameTableKind, LLVMBool debugBaseAddress, MDString *sysRoot, MDString *sdk) {
     LLVMContext &c = *unwrap(ctx);
     return DICompileUnit::getDistinct
         (c,
          sourceLanguage, file, producer, isOptimized, flags,
          runtimeVersion, splitDebugFilename, emissionKind, enumTypes, retainedTypes,
          globalVariables, importedEntities, macros, dwoid, splitDebugInlining,
-         debugInfoForProfiling, nameTableKind, debugBaseAddress);
+         debugInfoForProfiling, nameTableKind, debugBaseAddress, sysRoot, sdk);
 }
 
 unsigned LLVM_Hs_DICompileUnit_GetLanguage(DICompileUnit* cu) {
@@ -750,14 +755,14 @@ DIType* LLVM_Hs_DITemplateParameter_GetType(DITemplateParameter* p) {
 
 // DITemplateTypeParameter
 
-DITemplateTypeParameter* LLVM_Hs_Get_DITemplateTypeParameter(LLVMContextRef ctx, MDString* name, DIType* type) {
-    return DITemplateTypeParameter::get(*unwrap(ctx), name, type);
+DITemplateTypeParameter* LLVM_Hs_Get_DITemplateTypeParameter(LLVMContextRef ctx, MDString* name, DIType* type, bool isDefault) {
+    return DITemplateTypeParameter::get(*unwrap(ctx), name, type, isDefault);
 }
 
 // DITemplateValueParameter
 
-DITemplateValueParameter* LLVM_Hs_Get_DITemplateValueParameter(LLVMContextRef ctx, MDString* name, DIType* type, uint16_t tag, Metadata* value) {
-    return DITemplateValueParameter::get(*unwrap(ctx), tag, name, type, value);
+DITemplateValueParameter* LLVM_Hs_Get_DITemplateValueParameter(LLVMContextRef ctx, MDString* name, DIType* type, uint16_t tag, bool isDefault, Metadata* value) {
+    return DITemplateValueParameter::get(*unwrap(ctx), tag, name, type, isDefault, value);
 }
 
 Metadata* LLVM_Hs_DITemplateValueParameter_GetValue(DITemplateValueParameter* p) {
@@ -882,8 +887,8 @@ DIType* LLVM_Hs_DIObjCProperty_GetType(DIObjCProperty* o) {
 
 // DIModule
 
-DIModule* LLVM_Hs_Get_DIModule(LLVMContextRef ctx, DIScope* scope, MDString* name, MDString* configurationMacros, MDString* includePath, MDString* isysRoot) {
-    return DIModule::get(*unwrap(ctx), scope, name, configurationMacros, includePath, isysRoot);
+DIModule* LLVM_Hs_Get_DIModule(LLVMContextRef ctx, DIFile* file, DIScope* scope, MDString* name, MDString* configurationMacros, MDString* includePath, MDString* apiNotesFile, unsigned lineNo) {
+    return DIModule::get(*unwrap(ctx), file, scope, name, configurationMacros, includePath, apiNotesFile, lineNo);
 }
 
 MDString* LLVM_Hs_DIModule_GetConfigurationMacros(DIModule* m) {
@@ -894,7 +899,11 @@ MDString* LLVM_Hs_DIModule_GetIncludePath(DIModule* m) {
     return m->getRawIncludePath();
 }
 
-MDString* LLVM_Hs_DIModule_GetISysRoot(DIModule* m) {
-    return m->getRawISysRoot();
+MDString* LLVM_Hs_DIModule_GetAPINotesFile(DIModule* m) {
+    return m->getRawAPINotesFile();
+}
+
+uint32_t LLVM_Hs_DIModule_GetLineNo(DIModule* m) {
+    return m->getLineNo();
 }
 }

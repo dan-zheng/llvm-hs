@@ -17,7 +17,7 @@ extern "C" {
 // Thread-safe context
 
 ThreadSafeContext* LLVM_Hs_createThreadSafeContext() {
-    return new ThreadSafeContext(llvm::make_unique<LLVMContext>());
+    return new ThreadSafeContext(std::make_unique<LLVMContext>());
 }
 
 void LLVM_Hs_disposeThreadSafeContext(ThreadSafeContext* ctx) {
@@ -27,7 +27,7 @@ void LLVM_Hs_disposeThreadSafeContext(ThreadSafeContext* ctx) {
 // Object layer
 
 ObjectLayer* LLVM_Hs_createRTDyldObjectLinkingLayer(ExecutionSession* es) {
-    return new RTDyldObjectLinkingLayer(*es, []() { return llvm::make_unique<SectionMemoryManager>(); });
+    return new RTDyldObjectLinkingLayer(*es, []() { return std::make_unique<SectionMemoryManager>(); });
 }
 
 void LLVM_Hs_disposeObjectLayer(ObjectLayer* ol) {
@@ -37,13 +37,14 @@ void LLVM_Hs_disposeObjectLayer(ObjectLayer* ol) {
 // Compile layer
 
 IRLayer* LLVM_Hs_createIRCompileLayer(ExecutionSession* es, ObjectLayer* baseLayer, LLVMTargetMachineRef tm) {
-    return new IRCompileLayer(*es, *baseLayer, SimpleCompiler(*unwrap(tm)));
+    return new IRCompileLayer(*es, *baseLayer, std::make_unique<SimpleCompiler>(SimpleCompiler(*unwrap(tm))));
 }
 
 void LLVM_Hs_disposeIRLayer(IRLayer* il) {
     delete il;
 }
 
+#if 0
 // Warning: This consumes the module.
 void LLVM_Hs_IRLayer_add(ThreadSafeContext*  ctx, ExecutionSession* es, LLVMTargetDataRef dataLayout, IRLayer* il, LLVMModuleRef m) {
     std::unique_ptr<Module> mod{unwrap(m)};
@@ -55,8 +56,21 @@ void LLVM_Hs_IRLayer_add(ThreadSafeContext*  ctx, ExecutionSession* es, LLVMTarg
         exit(1);
     }
 }
+#endif
+
+// Warning: This consumes the module.
+void LLVM_Hs_IRLayer_add(IRLayer* il, JITDylib &jd, ThreadSafeModule &tsm, LLVMTargetDataRef dataLayout) {
+    if (tsm.getModuleUnlocked()->getDataLayout().isDefault()) {
+        tsm.getModuleUnlocked()->setDataLayout(*unwrap(dataLayout));
+    }
+    if (Error err = il->add(jd, std::move(tsm))) {
+        llvm::errs() << err << "\n";
+        exit(1);
+    }
+}
 
 uint64_t LLVM_Hs_ExecutionSession_lookup(ExecutionSession* es, const char* mangledName) {
+#if 0
     if (auto symbolOrErr = es->lookup({&es->getMainJITDylib()}, mangledName)) {
         auto& symbol = *symbolOrErr;
         return symbol.getAddress();
@@ -65,6 +79,8 @@ uint64_t LLVM_Hs_ExecutionSession_lookup(ExecutionSession* es, const char* mangl
         llvm::errs() << err << "\n";
         exit(1);
     }
+#endif
+  return 0;
 }
 
 }

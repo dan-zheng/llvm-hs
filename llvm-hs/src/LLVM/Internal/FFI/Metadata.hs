@@ -612,7 +612,7 @@ foreign import ccall unsafe "LLVM_Hs_DIObjCProperty_GetType" getDIObjCPropertyTy
 
 -- DIModule
 foreign import ccall unsafe "LLVM_Hs_Get_DIModule" getDIModule ::
-  Ptr Context -> Ptr DIScope -> Ptr MDString -> Ptr MDString -> Ptr MDString -> Ptr MDString -> IO (Ptr DIModule)
+  Ptr Context -> Ptr DIScope -> Ptr MDString -> Ptr MDString -> Ptr MDString -> Ptr MDString -> Word32 -> IO (Ptr DIModule)
 
 foreign import ccall unsafe "LLVM_Hs_DIModule_GetConfigurationMacros" getDIModuleConfigurationMacros ::
   Ptr DIModule -> IO (Ptr MDString)
@@ -620,5 +620,8 @@ foreign import ccall unsafe "LLVM_Hs_DIModule_GetConfigurationMacros" getDIModul
 foreign import ccall unsafe "LLVM_Hs_DIModule_GetIncludePath" getDIModuleIncludePath ::
   Ptr DIModule -> IO (Ptr MDString)
 
-foreign import ccall unsafe "LLVM_Hs_DIModule_GetISysRoot" getDIModuleISysRoot ::
+foreign import ccall unsafe "LLVM_Hs_DIModule_GetAPINotesFile" getDIModuleAPINotesFile ::
   Ptr DIModule -> IO (Ptr MDString)
+
+foreign import ccall unsafe "LLVM_Hs_DIModule_GetLineNo" getDIModuleLineNo ::
+  Ptr DIModule -> IO Word32

@@ -242,7 +242,8 @@ data DIModule = Module
   , name :: ShortByteString
   , configurationMacros :: ShortByteString
   , includePath :: ShortByteString
-  , isysRoot :: ShortByteString
+  , apiNotesFile :: ShortByteString
+  , lineNo :: Word32
   } deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 
 data DINamespace = Namespace
