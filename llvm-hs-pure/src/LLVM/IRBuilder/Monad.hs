@@ -13,7 +13,6 @@ import LLVM.Prelude
 
 import Control.Monad.Cont
 import Control.Monad.Except
-import Control.Monad.Fail
 import qualified Control.Monad.Fail as Fail
 import Control.Monad.Identity
 import qualified Control.Monad.Writer.Lazy as Lazy

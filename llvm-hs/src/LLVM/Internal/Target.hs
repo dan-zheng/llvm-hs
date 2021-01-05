@@ -169,7 +169,7 @@ withTargetOptions = bracket FFI.createTargetOptions FFI.disposeTargetOptions . (
 pokeTargetOptions :: TO.Options -> TargetOptions -> IO ()
 pokeTargetOptions hOpts opts@(TargetOptions cOpts) = do
   mapM_ (\(c, ha) -> FFI.setTargetOptionFlag cOpts c =<< encodeM (ha hOpts)) [
-    (FFI.targetOptionFlagPrintMachineCode, TO.printMachineCode),
+    -- (FFI.targetOptionFlagPrintMachineCode, TO.printMachineCode),
     (FFI.targetOptionFlagUnsafeFPMath, TO.unsafeFloatingPointMath),
     (FFI.targetOptionFlagNoInfsFPMath, TO.noInfinitiesFloatingPointMath),
     (FFI.targetOptionFlagNoNaNsFPMath, TO.noNaNsFloatingPointMath),
@@ -212,7 +212,7 @@ pokeMachineCodeOptions hOpts (MCTargetOptions cOpts) =
     (FFI.mcTargetOptionFlagMCSaveTempLabels, TO.saveTemporaryLabels),
     (FFI.mcTargetOptionFlagMCUseDwarfDirectory, TO.useDwarfDirectory),
     (FFI.mcTargetOptionFlagMCIncrementalLinkerCompatible, TO.incrementalLinkerCompatible),
-    (FFI.mcTargetOptionFlagMCPIECopyRelocations, TO.pieCopyRelocations),
+    -- (FFI.mcTargetOptionFlagMCPIECopyRelocations, TO.pieCopyRelocations),
     (FFI.mcTargetOptionFlagShowMCEncoding, TO.showMachineCodeEncoding),
     (FFI.mcTargetOptionFlagShowMCInst, TO.showMachineCodeInstructions),
     (FFI.mcTargetOptionFlagAsmVerbose, TO.verboseAssembly),
@@ -223,8 +223,8 @@ pokeMachineCodeOptions hOpts (MCTargetOptions cOpts) =
 peekTargetOptions :: TargetOptions -> IO TO.Options
 peekTargetOptions opts@(TargetOptions tOpts) = do
   let gof = decodeM <=< FFI.getTargetOptionsFlag tOpts
-  printMachineCode
-    <- gof FFI.targetOptionFlagPrintMachineCode
+  -- printMachineCode
+  --   <- gof FFI.targetOptionFlagPrintMachineCode
   unsafeFloatingPointMath
     <- gof FFI.targetOptionFlagUnsafeFPMath
   noInfinitiesFloatingPointMath
@@ -295,8 +295,8 @@ peekMachineCodeOptions (MCTargetOptions tOpts) = do
     <- gof FFI.mcTargetOptionFlagMCUseDwarfDirectory
   incrementalLinkerCompatible
     <- gof FFI.mcTargetOptionFlagMCIncrementalLinkerCompatible
-  pieCopyRelocations
-    <- gof FFI.mcTargetOptionFlagMCPIECopyRelocations
+  -- pieCopyRelocations
+  --   <- gof FFI.mcTargetOptionFlagMCPIECopyRelocations
   showMachineCodeEncoding
     <- gof FFI.mcTargetOptionFlagShowMCEncoding
   showMachineCodeInstructions

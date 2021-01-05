@@ -21,9 +21,9 @@ module LLVM.OrcJIT (
     createExecutionSession,
     disposeExecutionSession,
     withExecutionSession,
-    allocateModuleKey,
-    releaseModuleKey,
-    withModuleKey,
+    -- allocateModuleKey,
+    -- releaseModuleKey,
+    -- withModuleKey,
     -- ** IRCompileLayer
     IRCompileLayer,
     newIRCompileLayer,

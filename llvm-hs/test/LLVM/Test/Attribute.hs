@@ -89,11 +89,11 @@ moduleAst =
           , NoDuplicate
           , NoImplicitFloat
           , NoInline
+          , NonLazyBind
           , NoRecurse
           , NoRedZone
           , NoReturn
           , NoUnwind
-          , NonLazyBind
           , OptimizeForSize
           , OptimizeNone
           , ReadNone

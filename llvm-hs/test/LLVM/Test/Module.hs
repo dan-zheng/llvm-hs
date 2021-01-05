@@ -307,7 +307,6 @@ tests = testGroup "Module" [
             \\t.size\tmain, .Lfunc_end0-main\n\
             \\t.cfi_endproc\n\
             \\n\
-            \\n\
             \\t.section\t\".note.GNU-stack\",\"\",@progbits\n"
    ],
 

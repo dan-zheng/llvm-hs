@@ -40,6 +40,8 @@ import LLVM.Internal.EncodeAST
 import qualified LLVM.Internal.FFI.PtrHierarchy as FFI
 import qualified LLVM.Internal.FFI.Metadata as FFI
 
+import Debug.Trace
+
 tests = testGroup "Metadata"
   [ globalMetadata
   , namedMetadata
@@ -249,11 +251,15 @@ instance Arbitrary DIFile where
     O.File <$> arbitrarySbs <*> arbitrarySbs <*> arbitrary
 
 instance Arbitrary DISubrange where
-  arbitrary = Subrange <$> arbitrary <*> arbitrary
+  arbitrary = Subrange <$> arbitrary <*> arbitrary <*> arbitrary <*> arbitrary
 
 instance Arbitrary DICount where
-  -- TODO Include DICountVariable
+  -- TODO: Also generate DICountVariable
   arbitrary = DICountConstant <$> arbitrary
+
+instance Arbitrary DIBound where
+  -- TODO: Also generate DIBoundVariable, DIBoundExpression
+  arbitrary = DIBoundConstant <$> arbitrary
 
 instance Arbitrary DIEnumerator where
   arbitrary = Enumerator <$> arbitrary <*> arbitrary <*> arbitrarySbs
@@ -347,6 +353,8 @@ roundtripDINode = testProperty "roundtrip DINode" $ \diNode -> ioProperty $
   withContext $ \context -> runEncodeAST context $ do
     encodedDINode <- encodeM (diNode :: DINode)
     decodedDINode <- liftIO (runDecodeAST (decodeM (encodedDINode :: Ptr FFI.DINode)))
+    traceM ("SHOW DINODE: " ++ show diNode)
+    traceM ("SHOW DECODEDDINODE: " ++ show decodedDINode)
     pure (decodedDINode === diNode)
 
 roundtripDICompileUnit :: TestTree
@@ -612,7 +620,7 @@ instance Arbitrary Virtuality where
   arbitrary = QC.elements [A.NoVirtuality, A.Virtual, A.PureVirtual]
 
 roundtripDITemplateParameter :: TestTree
-roundtripDITemplateParameter = testProperty "rountrip DITemplateParameter" $ \diType ->
+roundtripDITemplateParameter = testProperty "roundtrip DITemplateParameter" $ \diType ->
   forAll (genDITemplateParameter (MDValue (ConstantOperand (C.Int 32 1))) (MDRef tyID)) $ \param -> ioProperty $
     withContext $ \context -> runEncodeAST context $ do
       let mod = defaultModule
@@ -638,7 +646,7 @@ genDITemplateParameter value ty =
         ]
 
 roundtripDINamespace :: TestTree
-roundtripDINamespace = testProperty "rountrip DINamespace" $ \diFile ->
+roundtripDINamespace = testProperty "roundtrip DINamespace" $ \diFile ->
   forAll (genDINamespace (MDRef fileID)) $ \diNamespace -> ioProperty $
     withContext $ \context -> runEncodeAST context $ do
       let mod = defaultModule

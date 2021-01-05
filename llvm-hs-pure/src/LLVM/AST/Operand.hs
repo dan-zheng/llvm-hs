@@ -218,13 +218,22 @@ data DIEnumerator =
   deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 
 -- | <https://llvm.org/docs/LangRef.html#disubrange>
-data DISubrange =
-  Subrange { count :: DICount, lowerBound :: Int64 }
-  deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
+data DISubrange = Subrange
+  { count :: DICount
+  , lowerBound :: DIBound
+  , upperBound :: Maybe DIBound
+  , stride :: Maybe DIBound
+  } deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 
 data DICount
   = DICountConstant Int64
   | DICountVariable (MDRef DIVariable)
+  deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
+
+data DIBound
+  = DIBoundConstant Int64
+  | DIBoundVariable (MDRef DIVariable)
+  | DIBoundExpression (MDRef DIExpression)
   deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 
 -- | <https://llvm.org/doxygen/classllvm_1_1DIScope.html>
@@ -242,7 +251,8 @@ data DIModule = Module
   , name :: ShortByteString
   , configurationMacros :: ShortByteString
   , includePath :: ShortByteString
-  , isysRoot :: ShortByteString
+  , apiNotesFile :: ShortByteString
+  , lineNo :: Word32
   } deriving (Eq, Ord, Read, Show, Typeable, Data, Generic)
 
 data DINamespace = Namespace

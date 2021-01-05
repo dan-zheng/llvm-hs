@@ -156,7 +156,7 @@ LLVMValueRef LLVM_Hs_BuildLoad(
 	unsigned align,
 	const char *name
 ) {
-	LoadInst *i = unwrap(b)->CreateAlignedLoad(unwrap(p), align, isVolatile, name);
+	LoadInst *i = unwrap(b)->CreateAlignedLoad(unwrap(p), MaybeAlign(align), isVolatile, name);
 	i->setOrdering(unwrap(atomicOrdering));
 	if (atomicOrdering != LLVMAtomicOrderingNotAtomic) i->setSyncScopeID(unwrap(synchScope));
 	return wrap(i);
@@ -172,7 +172,7 @@ LLVMValueRef LLVM_Hs_BuildStore(
 	unsigned align,
 	const char *name
 ) {
-	StoreInst *i = unwrap(b)->CreateAlignedStore(unwrap(v), unwrap(p), align, isVolatile);
+	StoreInst *i = unwrap(b)->CreateAlignedStore(unwrap(v), unwrap(p), MaybeAlign(align), isVolatile);
 	i->setName(name);
 	i->setOrdering(unwrap(atomicOrdering));
 	if (atomicOrdering != LLVMAtomicOrderingNotAtomic) i->setSyncScopeID(unwrap(synchScope));

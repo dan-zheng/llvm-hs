@@ -22,16 +22,16 @@ data DITemplateParameterArray
 -- | A 'TupleArray a' stores an array of elements of type 'Ptr a' using an 'MDTuple'.
 newtype TupleArray a = TupleArray (Ptr MDTuple)
 
-foreign import ccall unsafe "LLVM_Hs_IsAMDString" isAMDString ::
+foreign import ccall unsafe "LLVM_Hs_isaMDString" isaMDString ::
   Ptr Metadata -> IO (Ptr MDString)
 
-foreign import ccall unsafe "LLVM_Hs_IsAMDNode" isAMDNode ::
+foreign import ccall unsafe "LLVM_Hs_isaMDNode" isaMDNode ::
   Ptr Metadata -> IO (Ptr MDNode)
 
-foreign import ccall unsafe "LLVM_Hs_IsAMDValue" isAMDValue ::
+foreign import ccall unsafe "LLVM_Hs_isaMDValue" isaMDValue ::
   Ptr Metadata -> IO (Ptr MDValue)
 
-foreign import ccall unsafe "LLVM_Hs_IsAMetadataOperand" isAMetadataOperand ::
+foreign import ccall unsafe "LLVM_Hs_isaMetadataOperand" isaMetadataOperand ::
   Ptr Value -> IO (Ptr MetadataAsVal)
 
 foreign import ccall unsafe "LLVM_Hs_GetMetadataClassId" getMetadataClassId ::
@@ -53,6 +53,9 @@ foreign import ccall unsafe "LLVM_Hs_Get_DILocation" getDILocation ::
 
 foreign import ccall unsafe "LLVM_Hs_GetMDValue" getMDValue ::
   Ptr MDValue -> IO (Ptr Value)
+
+foreign import ccall unsafe "LLVM_Hs_DumpMetadata" dumpMetadata ::
+  Ptr Metadata -> IO ()
 
 foreign import ccall unsafe "LLVM_Hs_GetMetadataOperand" getMetadataOperand ::
   Ptr MetadataAsVal -> IO (Ptr Metadata)
@@ -291,17 +294,34 @@ foreign import ccall unsafe "LLVM_Hs_Get_DISubrangeConstantCount" getDISubrangeC
 foreign import ccall unsafe "LLVM_Hs_Get_DISubrangeVariableCount" getDISubrangeVariableCount ::
   Ptr Context -> Ptr DIVariable -> Int64 -> IO (Ptr DISubrange)
 
+foreign import ccall unsafe "LLVM_Hs_Get_DISubrangeVariableFields" getDISubrangeVariableFields ::
+  Ptr Context ->
+  Ptr Metadata -> -- count
+  Ptr Metadata -> -- lowerBound
+  Ptr Metadata -> -- upperBound
+  Ptr Metadata -> -- strides
+  IO (Ptr DISubrange)
+
 foreign import ccall unsafe "LLVM_Hs_DISubrange_HasConstantCount" getDISubrangeHasConstantCount ::
   Ptr DISubrange -> IO LLVMBool
 
-foreign import ccall unsafe "LLVM_Hs_DISubrange_GetVariableCount" getDISubrangeCountVariable ::
+foreign import ccall unsafe "LLVM_Hs_DISubrange_GetCount" getDISubrangeCount ::
+  Ptr DISubrange -> IO (Ptr Metadata)
+
+foreign import ccall unsafe "LLVM_Hs_DISubrange_GetCountVariable" getDISubrangeCountVariable ::
   Ptr DISubrange -> IO (Ptr DIVariable)
 
-foreign import ccall unsafe "LLVM_Hs_DISubrange_GetConstantCount" getDISubrangeCountConstant ::
+foreign import ccall unsafe "LLVM_Hs_DISubrange_GetCountConstant" getDISubrangeCountConstant ::
   Ptr DISubrange -> IO Int64
 
 foreign import ccall unsafe "LLVM_Hs_DISubrange_GetLowerBound" getDISubrangeLowerBound ::
-  Ptr DISubrange -> IO Int64
+  Ptr DISubrange -> IO (Ptr Metadata)
+
+foreign import ccall unsafe "LLVM_Hs_DISubrange_GetUpperBound" getDISubrangeUpperBound ::
+  Ptr DISubrange -> IO (Ptr Metadata)
+
+foreign import ccall unsafe "LLVM_Hs_DISubrange_GetStride" getDISubrangeStride ::
+  Ptr DISubrange -> IO (Ptr Metadata)
 
 -- DISubprogram
 
@@ -612,7 +632,7 @@ foreign import ccall unsafe "LLVM_Hs_DIObjCProperty_GetType" getDIObjCPropertyTy
 
 -- DIModule
 foreign import ccall unsafe "LLVM_Hs_Get_DIModule" getDIModule ::
-  Ptr Context -> Ptr DIScope -> Ptr MDString -> Ptr MDString -> Ptr MDString -> Ptr MDString -> IO (Ptr DIModule)
+  Ptr Context -> Ptr DIScope -> Ptr MDString -> Ptr MDString -> Ptr MDString -> Ptr MDString -> Word32 -> IO (Ptr DIModule)
 
 foreign import ccall unsafe "LLVM_Hs_DIModule_GetConfigurationMacros" getDIModuleConfigurationMacros ::
   Ptr DIModule -> IO (Ptr MDString)
@@ -620,5 +640,8 @@ foreign import ccall unsafe "LLVM_Hs_DIModule_GetConfigurationMacros" getDIModul
 foreign import ccall unsafe "LLVM_Hs_DIModule_GetIncludePath" getDIModuleIncludePath ::
   Ptr DIModule -> IO (Ptr MDString)
 
-foreign import ccall unsafe "LLVM_Hs_DIModule_GetISysRoot" getDIModuleISysRoot ::
+foreign import ccall unsafe "LLVM_Hs_DIModule_GetAPINotesFile" getDIModuleAPINotesFile ::
   Ptr DIModule -> IO (Ptr MDString)
+
+foreign import ccall unsafe "LLVM_Hs_DIModule_GetLineNo" getDIModuleLineNo ::
+  Ptr DIModule -> IO Word32
