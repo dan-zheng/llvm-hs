@@ -1,9 +1,15 @@
 module LLVM.Internal.OrcJITV2
   ( ExecutionSession
   , withExecutionSession
-  , esLookup
+  , lookupSymbol
+  , createJITDylib
   , ThreadSafeContext
   , withThreadSafeContext
+  , createThreadSafeContext
+  , disposeThreadSafeContext
+  , withThreadSafeModule
+  , createThreadSafeModule
+  , disposeThreadSafeModule
   , ObjectLayer
   , withRTDyldObjectLinkingLayer
   , IRLayer
@@ -17,8 +23,8 @@ import Control.Exception
 import Foreign.C
 import Foreign.Ptr
 
-import LLVM.Internal.Module (Module, readModule, deleteModule)
-import LLVM.Internal.OrcJIT (ExecutionSession(..), withExecutionSession)
+import LLVM.Internal.Module (Module, readModule)
+import LLVM.Internal.OrcJIT (ExecutionSession(..), JITDylib(..), withExecutionSession)
 import LLVM.Internal.Target (TargetMachine(..))
 
 import qualified LLVM.Internal.FFI.DataLayout as FFI
@@ -26,15 +32,26 @@ import qualified LLVM.Internal.FFI.OrcJITV2 as FFI
 import qualified LLVM.Internal.FFI.Target as FFI
 
 newtype ThreadSafeContext = ThreadSafeContext (Ptr FFI.ThreadSafeContext)
+
+newtype ThreadSafeModule = ThreadSafeModule (Ptr FFI.ThreadSafeModule)
+
 data IRLayer = IRLayer
   { _getIRLayer :: Ptr FFI.IRLayer
   , _getDataLayout :: Ptr FFI.DataLayout
   }
 newtype ObjectLayer = ObjectLayer (Ptr FFI.ObjectLayer)
 
-esLookup :: ExecutionSession -> String -> IO Word64
-esLookup (ExecutionSession es) s = withCString s $ \cStr ->
-  FFI.esLookup es cStr
+createJITDylib :: ExecutionSession -> String -> IO JITDylib
+createJITDylib (ExecutionSession es) s = withCString s
+  (fmap JITDylib . FFI.createJITDylib es)
+
+getJITDylibByName :: ExecutionSession -> String -> IO JITDylib
+getJITDylibByName (ExecutionSession es) s = withCString s
+  (fmap JITDylib . FFI.getJITDylibByName es)
+
+lookupSymbol :: ExecutionSession -> JITDylib -> String -> IO Word64
+lookupSymbol (ExecutionSession es) (JITDylib dylib) s = withCString s $ \cStr ->
+  FFI.lookupSymbol es dylib cStr
 
 createThreadSafeContext :: IO ThreadSafeContext
 createThreadSafeContext = ThreadSafeContext <$> FFI.createThreadSafeContext
@@ -44,6 +61,17 @@ disposeThreadSafeContext (ThreadSafeContext ctx) = FFI.disposeThreadSafeContext 
 
 withThreadSafeContext :: (ThreadSafeContext -> IO a) -> IO a
 withThreadSafeContext = bracket createThreadSafeContext disposeThreadSafeContext
+
+createThreadSafeModule :: Module -> IO ThreadSafeModule
+createThreadSafeModule m = do
+  mPtr <- readModule m
+  ThreadSafeModule <$> FFI.createThreadSafeModule mPtr
+
+disposeThreadSafeModule :: ThreadSafeModule -> IO ()
+disposeThreadSafeModule (ThreadSafeModule m) = FFI.disposeThreadSafeModule m
+
+withThreadSafeModule :: Module -> (ThreadSafeModule -> IO a) -> IO a
+withThreadSafeModule m = bracket (createThreadSafeModule m) disposeThreadSafeModule
 
 createRTDyldObjectLinkingLayer :: ExecutionSession -> IO ObjectLayer
 createRTDyldObjectLinkingLayer (ExecutionSession es) =
@@ -73,8 +101,6 @@ withIRCompileLayer es ol tm =
     (createIRCompileLayer es ol tm)
     disposeIRLayer
 
-irLayerAdd :: ThreadSafeContext -> ExecutionSession -> IRLayer -> Module -> IO ()
-irLayerAdd (ThreadSafeContext ctx) (ExecutionSession es) (IRLayer il dl) m = do
-  mPtr <- readModule m
-  deleteModule m
-  FFI.irLayerAdd ctx es dl il mPtr
+irLayerAdd :: ThreadSafeModule -> JITDylib -> IRLayer -> IO ()
+irLayerAdd (ThreadSafeModule m) (JITDylib dylib) (IRLayer il dl) = do
+  FFI.irLayerAdd m dylib dl il

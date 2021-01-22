@@ -6,3 +6,6 @@ packages:
 
 extra-package-dbs: []
 
+flags:
+  llvm-hs:
+    shared-llvm: false

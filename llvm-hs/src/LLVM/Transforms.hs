@@ -17,10 +17,8 @@ data Pass
   | BreakCriticalEdges
   -- | can use a 'LLVM.Target.TargetMachine'
   | CodeGenPrepare
-  | ConstantPropagation
   | CorrelatedValuePropagation
   | DeadCodeElimination
-  | DeadInstructionElimination
   | DeadStoreElimination
   | DemoteRegisterToMemory
   | EarlyCommonSubexpressionElimination
@@ -68,7 +66,6 @@ data Pass
     }
   | GlobalDeadCodeElimination
   | InternalizeFunctions { exportList :: [String] }
-  | InterproceduralConstantPropagation
   | InterproceduralSparseConditionalConstantPropagation
   | MergeFunctions
   | PartialInlining

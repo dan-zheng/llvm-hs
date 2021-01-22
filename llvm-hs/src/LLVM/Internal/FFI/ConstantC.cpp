@@ -82,6 +82,8 @@ const unsigned *LLVM_Hs_GetConstIndices(LLVMValueRef v, unsigned *n) {
 }
 
 const uint64_t *LLVM_Hs_GetConstantIntWords(LLVMValueRef v, unsigned *n) {
+  // llvm::errs() << "LLVM_Hs_GetConstantIntWords: ";
+  // unwrap<Value>(v)->dump();
 	const APInt &i = unwrap<ConstantInt>(v)->getValue();
 	*n = i.getNumWords();
 	return i.getRawData();

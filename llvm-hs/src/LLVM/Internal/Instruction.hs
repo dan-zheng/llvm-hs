@@ -55,6 +55,8 @@ import qualified LLVM.AST as A
 import qualified LLVM.AST.Constant as A.C
 import LLVM.Exception
 
+import Debug.Trace
+
 callInstAttributeList :: Ptr FFI.Instruction -> DecodeAST AttributeList
 callInstAttributeList instr =
   decodeM
@@ -85,6 +87,7 @@ instance DecodeM DecodeAST A.Terminator (Ptr FFI.Instruction) where
     n <- liftIO $ FFI.getInstructionDefOpcode i
     nOps <- liftIO $ FFI.getNumOperands (FFI.upCast i)
     md <- meta i
+    traceM ("Decode instruction: " ++ show i ++ ", opcode: " ++ show n ++ ", operand count: " ++ show nOps)
     let op n = decodeM =<< (liftIO $ FFI.getOperand (FFI.upCast i) n)
         successor n = decodeM =<< (liftIO $ FFI.isABasicBlock =<< FFI.getOperand (FFI.upCast i) n)
     case n of
@@ -92,6 +95,7 @@ instance DecodeM DecodeAST A.Terminator (Ptr FFI.Instruction) where
         returnOperand' <- if nOps == 0 then return Nothing else Just <$> op 0
         return $ A.Ret { A.returnOperand = returnOperand', A.metadata' = md }
       [instrP|Br|] -> do
+        traceM ("Decode branch instruction: " ++ show i ++ ", opcode: " ++ show n ++ ", operand count: " ++ show nOps)
         n <- liftIO $ FFI.getNumOperands (FFI.upCast i)
         case n of
           1 -> do
@@ -458,6 +462,17 @@ $(do
                  bs3' <- encodeM bs3
                  liftIO $ FFI.addIncoming i ivs3' bs3'
                )
+          A.Select { A.condition' = c, A.trueValue = t, A.falseValue = f } -> do
+            c' <- encodeM c
+            t' <- encodeM t
+            f' <- encodeM f
+            i <- liftIO $ FFI.buildSelect builder c' t' f' s
+            return' i
+          A.Freeze { A.operand0 = op0, A.type' = t } -> do
+            op0' <- encodeM op0
+            t' <- encodeM t
+            i <- liftIO $ FFI.buildFreeze builder op0' t'
+            return' i
           A.Call {
             A.tailCallKind = tck,
             A.callingConvention = cc,
@@ -476,12 +491,6 @@ $(do
             liftIO $ FFI.setTailCallKind i tck
             cc <- encodeM cc
             liftIO $ FFI.setCallSiteCallingConvention i cc
-            return' i
-          A.Select { A.condition' = c, A.trueValue = t, A.falseValue = f } -> do
-            c' <- encodeM c
-            t' <- encodeM t
-            f' <- encodeM f
-            i <- liftIO $ FFI.buildSelect builder c' t' f' s
             return' i
           A.VAArg { A.argList = al, A.type' = t } -> do
             al' <- encodeM al
@@ -588,8 +597,9 @@ $(do
                         [p|A.ICmp{}|],
                         [p|A.FCmp{}|],
                         [p|A.Phi{}|],
-                        [p|A.Call{}|],
                         [p|A.Select{}|],
+                        [p|A.Freeze{}|],
+                        [p|A.Call{}|],
                         [p|A.VAArg{}|],
                         [p|A.ExtractElement{}|],
                         [p|A.InsertElement{}|],

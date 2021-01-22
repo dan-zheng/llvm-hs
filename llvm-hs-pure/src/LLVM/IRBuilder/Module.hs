@@ -16,7 +16,6 @@ import Prelude hiding (and, or)
 import Control.Applicative
 import Control.Monad.Cont
 import Control.Monad.Except
-import Control.Monad.Fail
 import qualified Control.Monad.Fail as Fail
 import Control.Monad.Identity
 import Control.Monad.Writer.Lazy as Lazy
@@ -234,7 +233,6 @@ instance MonadState s m => MonadState s (ModuleBuilderT m) where
 instance MonadModuleBuilder m => MonadModuleBuilder (ContT r m)
 instance MonadModuleBuilder m => MonadModuleBuilder (ExceptT e m)
 instance MonadModuleBuilder m => MonadModuleBuilder (IdentityT m)
-instance MonadModuleBuilder m => MonadModuleBuilder (ListT m)
 instance MonadModuleBuilder m => MonadModuleBuilder (MaybeT m)
 instance MonadModuleBuilder m => MonadModuleBuilder (ReaderT r m)
 instance (MonadModuleBuilder m, Monoid w) => MonadModuleBuilder (Strict.RWST r w s m)
