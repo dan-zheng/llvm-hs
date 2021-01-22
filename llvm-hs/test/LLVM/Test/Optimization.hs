@@ -29,10 +29,14 @@ import qualified LLVM.AST.CallingConvention as CC
 import qualified LLVM.AST.Attribute as A
 import qualified LLVM.AST.Global as G
 import qualified LLVM.AST.Constant as C
+import qualified LLVM.Internal.Module as M (readModule)
+import qualified LLVM.Internal.FFI.Module as M (dumpModule)
 
 import qualified LLVM.Relocation as R
 import qualified LLVM.CodeModel as CM
 import qualified LLVM.CodeGenOpt as CGO
+
+import Debug.Trace
 
 handAST = 
   Module "<string>" "<string>" Nothing Nothing [
@@ -96,10 +100,20 @@ handAST =
       FunctionAttributes (A.GroupID 0) [A.NoUnwind, A.ReadNone, A.UWTable]
      ]
 
+dumpModule' :: A.Module -> IO ()
+dumpModule' m = withContext $ \context -> withModuleFromAST context m $ \m' -> do
+  mPtr <- M.readModule m'
+  M.dumpModule mPtr
+
 isVectory :: A.Module -> Assertion
-isVectory Module { moduleDefinitions = ds } =
+isVectory mod@Module { moduleDefinitions = ds } = do
+  traceM $ "isVectory?"
+  _ <- putStrLn "AFTER OPTIMIZATIONS"
+  _ <- dumpModule' mod
+  -- NOTE(dan): This checks if the module contains any `extract_element` instructions.
+  -- Why is that expected after LoopVectorize runs?
   (@? "Module is not vectory") $ not $ null [ i 
-    | GlobalDefinition (Function { G.basicBlocks = b }) <- ds,
+    | GlobalDefinition Function { G.basicBlocks = b } <- ds,
       BasicBlock _ is _ <- b,
       _ := i@(ExtractElement {}) <- is
    ]
@@ -130,6 +144,8 @@ tests = testGroup "Optimization" [
       ],
 
   testGroup "individual" [
+    -- TODO: ConstantPropagation pass has been removed.
+    {-
     testCase "ConstantPropagation" $ do
       mOut <- optimize defaultPassSetSpec { transforms = [T.ConstantPropagation] } handAST
 
@@ -173,6 +189,7 @@ tests = testGroup "Optimization" [
          },
         FunctionAttributes (A.GroupID 0) [A.NoUnwind, A.ReadNone, A.UWTable]
        ],
+    -}
 
     testCase "SLPVectorization" $ do
       let
@@ -264,7 +281,7 @@ tests = testGroup "Optimization" [
                      ] [],
                     UnName 2 := GetElementPtr True (ConstantOperand (C.GlobalReference (PointerType (A.T.ArrayType 2048 i32) (AddrSpace 0)) (Name "a"))) [
                       ConstantOperand (C.Int 64 0),
-                      (LocalReference i64 (Name "indvars.iv"))
+                      LocalReference i64 (Name "indvars.iv")
                      ] [],
                     UnName 3 := Load False (LocalReference (ptr i32) (UnName 2)) Nothing 4 [],
                     UnName 4 := Trunc (LocalReference i64 (Name "indvars.iv")) i32 [],
@@ -281,6 +298,8 @@ tests = testGroup "Optimization" [
               FunctionAttributes (A.GroupID 0) [A.NoUnwind, A.ReadNone, A.UWTable, A.StackProtect]
              ]
            }
+      _ <- putStrLn "BEFORE OPTIMIZATIONS"
+      _ <- dumpModule' mIn
       mOut <- do
         initializeAllTargets
         let triple = "x86_64"
@@ -318,17 +337,17 @@ tests = testGroup "Optimization" [
             runPassManager passManager mIn
             moduleAST mIn
           astOut @?= Module "<string>" "<string>" Nothing Nothing [
-                  GlobalDefinition $ functionDefaults {
-                    G.returnType = i32,
-                    G.name = Name "foo",
-                    G.parameters = ([Parameter i32 (Name "x") []], False),
-                    G.basicBlocks = [
-                      BasicBlock (Name "here") [
-                      ] (
-                        Do $ Ret (Just (ConstantOperand (C.Int 32 0))) []
-                      )
-                    ]
-                  }
-                 ]
+              GlobalDefinition $ functionDefaults {
+                G.returnType = i32,
+                G.name = Name "foo",
+                G.parameters = ([Parameter i32 (Name "x") []], False),
+                G.basicBlocks = [
+                  BasicBlock (Name "here") [
+                  ] (
+                    Do $ Ret (Just (ConstantOperand (C.Int 32 0))) []
+                  )
+                ]
+              }
+            ]
    ]
  ]
