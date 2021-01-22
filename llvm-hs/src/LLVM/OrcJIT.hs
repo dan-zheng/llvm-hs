@@ -3,7 +3,7 @@ module LLVM.OrcJIT (
     CompileLayer,
     -- ** Add/remove modules
     ModuleKey,
-    addModule,
+    -- LLVM.Internal.OrcJIT.CompileLayer.addModule,
     removeModule,
     withModule,
     -- ** Search for symbols
@@ -14,16 +14,17 @@ module LLVM.OrcJIT (
     SymbolResolver(..),
     withSymbolResolver,
     -- ** Symbol mangling
-    MangledSymbol,
-    mangleSymbol,
+    MangledSymbol(..),
+    -- TODO: Remove prefix.
+    LLVM.Internal.OrcJITV2.mangleSymbol,
     -- ** ExecutionSession
     ExecutionSession,
     createExecutionSession,
     disposeExecutionSession,
     withExecutionSession,
-    allocateModuleKey,
-    releaseModuleKey,
-    withModuleKey,
+    -- allocateModuleKey,
+    -- releaseModuleKey,
+    -- withModuleKey,
     -- ** IRCompileLayer
     IRCompileLayer,
     newIRCompileLayer,
@@ -58,6 +59,26 @@ module LLVM.OrcJIT (
     newIndirectStubsManagerBuilder,
     disposeIndirectStubsManagerBuilder,
     withIndirectStubsManagerBuilder,
+    -- * OrcJITV2
+    JITDylib(..),
+    lookupSymbol,
+    createJITDylib,
+    getJITDylibByName,
+    ThreadSafeContext,
+    withThreadSafeContext,
+    createThreadSafeContext,
+    disposeThreadSafeContext,
+    withThreadSafeModule,
+    createThreadSafeModule,
+    disposeThreadSafeModule,
+    ObjectLayer,
+    createRTDyldObjectLinkingLayer,
+    disposeObjectLayer,
+    withRTDyldObjectLinkingLayer,
+    IRLayer,
+    createIRCompileLayer,
+    disposeIRCompileLayer,
+    LLVM.Internal.OrcJITV2.addModule,
   ) where
 
 import LLVM.Internal.OrcJIT
@@ -66,3 +87,4 @@ import LLVM.Internal.OrcJIT.LinkingLayer
 import LLVM.Internal.OrcJIT.CompileOnDemandLayer
 import LLVM.Internal.OrcJIT.IRCompileLayer
 import LLVM.Internal.OrcJIT.IRTransformLayer
+import LLVM.Internal.OrcJITV2

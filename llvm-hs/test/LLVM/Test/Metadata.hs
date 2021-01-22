@@ -40,6 +40,8 @@ import LLVM.Internal.EncodeAST
 import qualified LLVM.Internal.FFI.PtrHierarchy as FFI
 import qualified LLVM.Internal.FFI.Metadata as FFI
 
+import Debug.Trace
+
 tests = testGroup "Metadata"
   [ globalMetadata
   , namedMetadata
@@ -249,11 +251,15 @@ instance Arbitrary DIFile where
     O.File <$> arbitrarySbs <*> arbitrarySbs <*> arbitrary
 
 instance Arbitrary DISubrange where
-  arbitrary = Subrange <$> arbitrary <*> arbitrary
+  arbitrary = Subrange <$> arbitrary <*> arbitrary <*> arbitrary <*> arbitrary
 
 instance Arbitrary DICount where
-  -- TODO Include DICountVariable
+  -- TODO: Also generate non-trivial DICountVariable case.
   arbitrary = DICountConstant <$> arbitrary
+
+instance Arbitrary DIBound where
+  -- TODO: Also generate non-trivial DIBoundVariable, DIBoundExpression cases.
+  arbitrary = DIBoundConstant <$> arbitrary
 
 instance Arbitrary DIEnumerator where
   arbitrary = Enumerator <$> arbitrary <*> arbitrary <*> arbitrarySbs
@@ -263,7 +269,7 @@ instance Arbitrary DINode where
     oneof
       [ DISubrange <$> arbitrary
       , DIEnumerator <$> arbitrary
-      -- TODO: Add missing constructors
+      -- TODO: Also generate non-trivial cases.
       ]
 
 roundtripDIBasicType :: TestTree
@@ -462,7 +468,6 @@ instance Arbitrary A.DIFlag where
       , QC.elements
           [ A.FwdDecl
           , A.AppleBlock
-          , A.BlockByrefStruct
           , A.VirtualFlag
           , A.Artificial
           , A.Explicit
@@ -476,7 +481,6 @@ instance Arbitrary A.DIFlag where
           , A.IntroducedVirtual
           , A.BitField
           , A.NoReturn
-          , A.ArgumentNotModified
           , A.TypePassByValue
           , A.TypePassByReference
           , A.EnumClass
@@ -516,7 +520,6 @@ genDIFlags = do
     flags =
       [ A.FwdDecl
       , A.AppleBlock
-      , A.BlockByrefStruct
       , A.VirtualFlag
       , A.Artificial
       , A.Explicit
@@ -530,7 +533,6 @@ genDIFlags = do
       , A.IntroducedVirtual
       , A.BitField
       , A.NoReturn
-      , A.ArgumentNotModified
       , A.TypePassByValue
       , A.TypePassByReference
       , A.EnumClass
@@ -611,8 +613,40 @@ genDILexicalBlockBase scope file =
 instance Arbitrary Virtuality where
   arbitrary = QC.elements [A.NoVirtuality, A.Virtual, A.PureVirtual]
 
+-- FIXME: Fix this test.
+-- Mysterious invalid-pointer crash. See "BAD POINTER VALUE HERE" in debug output below:
+--
+-- $ stack test --test-arguments "--pattern DITemplateParameter"
+-- llvm-hs
+--   Metadata
+--     roundtrip DITemplateParameter: ENCODE DITEMPLATE PARAMETER SHOW VALUE! Just (MDValue (ConstantOperand (Int {integerBits = 32, integerValue = 1})))
+-- 1. ENCODE MDVALUE AS FFI.VALUE! ConstantOperand (Int {integerBits = 32, integerValue = 1})
+-- ENCODE CONSTANT!
+-- i32 1
+-- 2. ENCODE MDVALUE AS FFI.VALUE DONE! 0x00007fa8bdc15da0
+-- i32 1
+-- 3. CAST FFI.VALUE TO FFI.MDVALUE DONE! 0x00007fa8bdc15dd0
+-- LLVM_Hs_DumpMetadata: 0x7fa8bdc15dd0
+-- LLVM_Hs_DumpMetadata (unwrap): 0x7fa8bdc15dd0
+-- LLVM_Hs_DumpMetadata (MDNode): 0
+-- LLVM_Hs_DumpMetadata (ValueAsMetadata): 1
+-- LLVM_Hs_DumpMetadata (getMetadataID): 1
+-- reference kind: Metadata::MDStringKind: 0
+-- reference kind: Metadata::ConstantAsMetadataKind: 1
+-- i32 1
+-- ENCODE DITEMPLATE PARAMETER SHOW DONE! 0x00007fa8bdc15dd0
+-- LLVM_Hs_Get_DITemplateValueParameter value: 0x420007bbc8 <---- BAD POINTER VALUE HERE
+-- Assertion failed: (isa<X>(Val) && "cast<Ty>() argument of incompatible type!"),
+-- function cast, file llvm-project/llvm/include/llvm/Support/Casting.h, line 269.
+
+{- roundtripDITemplateParameter :: TestTree
+roundtripDITemplateParameter = testProperty "roundtrip DITemplateParameter" $ \diTemplateParam -> do
+  let x = DIFile diTemplateParam
+  -- pure ((diTemplateParam :: TemplateValueParameterTag) === diTemplateParam)
+  pure (x === x) -}
+
 roundtripDITemplateParameter :: TestTree
-roundtripDITemplateParameter = testProperty "rountrip DITemplateParameter" $ \diType ->
+roundtripDITemplateParameter = testProperty "roundtrip DITemplateParameter" $ \diType ->
   forAll (genDITemplateParameter (MDValue (ConstantOperand (C.Int 32 1))) (MDRef tyID)) $ \param -> ioProperty $
     withContext $ \context -> runEncodeAST context $ do
       let mod = defaultModule
@@ -638,7 +672,7 @@ genDITemplateParameter value ty =
         ]
 
 roundtripDINamespace :: TestTree
-roundtripDINamespace = testProperty "rountrip DINamespace" $ \diFile ->
+roundtripDINamespace = testProperty "roundtrip DINamespace" $ \diFile ->
   forAll (genDINamespace (MDRef fileID)) $ \diNamespace -> ioProperty $
     withContext $ \context -> runEncodeAST context $ do
       let mod = defaultModule
