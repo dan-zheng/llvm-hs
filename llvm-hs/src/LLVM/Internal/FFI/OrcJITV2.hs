@@ -41,6 +41,14 @@ foreign import ccall safe "LLVM_Hs_createIRCompileLayer" createIRCompileLayer ::
 foreign import ccall safe "LLVM_Hs_disposeIRLayer" disposeIRLayer ::
   Ptr IRLayer -> IO ()
 
+foreign import ccall safe "LLVM_Hs_JITDylib_addDynamicLibrarySearchGenerator_forCurrentProcess"
+  addDynamicLibrarySearchGeneratorForCurrentProcess ::
+    Ptr JITDylib -> Ptr DataLayout -> IO ()
+
+foreign import ccall safe "LLVM_Hs_JITDylib_addDynamicLibrarySearchGenerator_load"
+  addDynamicLibrarySearchGenerator ::
+    Ptr JITDylib -> Ptr DataLayout -> CString -> IO ()
+
 foreign import ccall safe "LLVM_Hs_IRLayer_addModule" irLayerAddModule ::
   Ptr ThreadSafeModule -> Ptr JITDylib -> Ptr DataLayout -> Ptr IRLayer -> IO ()
 

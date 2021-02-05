@@ -67,7 +67,24 @@ void LLVM_Hs_disposeIRLayer(IRLayer* il) {
     delete il;
 }
 
+void LLVM_Hs_JITDylib_addDynamicLibrarySearchGenerator_forCurrentProcess(JITDylib* dylib, LLVMTargetDataRef dataLayout) {
+    auto dataLayoutCpp = *unwrap(dataLayout);
+    ExitOnError ExitOnErr;
+    dylib->addGenerator(
+      ExitOnErr(orc::DynamicLibrarySearchGenerator::GetForCurrentProcess(
+          dataLayoutCpp.getGlobalPrefix())));
+    dylib->addGenerator(
+      ExitOnErr(orc::DynamicLibrarySearchGenerator::Load(
+          "/usr/lib/libSystem.dylib", dataLayoutCpp.getGlobalPrefix())));
+}
 
+void LLVM_Hs_JITDylib_addDynamicLibrarySearchGenerator_load(JITDylib* dylib, LLVMTargetDataRef dataLayout, const char* name) {
+    auto dataLayoutCpp = *unwrap(dataLayout);
+    ExitOnError ExitOnErr;
+    dylib->addGenerator(
+      ExitOnErr(orc::DynamicLibrarySearchGenerator::Load(
+          name, dataLayoutCpp.getGlobalPrefix())));
+}
 
 // Warning: This consumes the module.
 void LLVM_Hs_IRLayer_addModule(ThreadSafeModule* tsm, JITDylib* dylib, LLVMTargetDataRef dataLayout, IRLayer* il) {
